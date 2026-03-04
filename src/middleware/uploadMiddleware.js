@@ -1,0 +1,54 @@
+import fs from "fs";
+import path from "path";
+import multer from "multer";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.resolve(__dirname, "../../uploads/images");
+
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+    destination: (_req, _file, cb) => {
+        cb(null, uploadsDir);
+    },
+    filename: (_req, file, cb) => {
+        const extension = path.extname(file.originalname);
+        const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extension}`;
+        cb(null, filename);
+    },
+});
+
+const fileFilter = (_req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) {
+        return cb(null, true);
+    }
+    return cb(new Error("Only image files are allowed"), false);
+};
+
+const upload = multer({
+    storage,
+    fileFilter,
+    limits: {
+        fileSize: 5 * 1024 * 1024,//5mb
+    },
+});
+
+const uploadImage = (req, res, next) => {
+    upload.single("image")(req, res, (error) => {
+        if (!error) {
+            return next();
+        }
+
+        if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
+            return res.status(400).json({ message: "Image size must be less than or equal to 5MB" });
+        }
+
+        return res.status(400).json({ message: error.message || "Image upload failed" });
+    });
+};
+
+export { uploadImage };
