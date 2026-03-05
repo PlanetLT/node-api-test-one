@@ -1,47 +1,32 @@
-import { prisma } from "../config/db.js";
+import {
+  addItem,
+  updateItem,
+  removeItem,
+  getItems,
+} from "../services/watchlistService.js";
+import { sendSuccess, sendError } from "../utils/apiResponse.js";
 
 const addToWatchlist = async (req, res) => {
+  try {
     const { movieId, status, rating, notes } = req.body;
-
-    // Verify movie exists
-    const movie = await prisma.movie.findUnique({
-        where: { id: movieId },
+    const watchlistItem = await addItem(req.user.id, {
+      movieId,
+      status,
+      rating,
+      notes,
     });
 
-    if (!movie) {
-        return res.status(404).json({ error: "Movie not found" });
+    return sendSuccess(res, {
+      statusCode: 201,
+      message: "Watchlist item created successfully",
+      data: { watchlistItem },
+    });
+  } catch (error) {
+    if (error?.status) {
+      return sendError(res, { statusCode: error.status, message: error.message });
     }
-
-    // CHeck if already added
-    const existingInWatchlist = await prisma.watchlistItem.findUnique({
-        where: {
-            userId_movieId: {
-                userId: req.user.id,
-                movieId: movieId,
-            },
-        },
-    });
-
-    if (existingInWatchlist) {
-        return res.status(400).json({ error: "Movie already in the watchlist" });
-    }
-
-    const watchlistItem = await prisma.watchlistItem.create({
-        data: {
-            userId: req.user.id,
-            movieId,
-            status: status || "PLANNED",
-            rating,
-            notes,
-        },
-    });
-
-    res.status(201).json({
-        status: "Success",
-        data: {
-            watchlistItem,
-        },
-    });
+    return sendError(res);
+  }
 };
 
 /**
@@ -51,42 +36,24 @@ const addToWatchlist = async (req, res) => {
  * Requires protect middleware
  */
 const updateWatchlistItem = async (req, res) => {
+  try {
     const { status, rating, notes } = req.body;
-
-    // Find watchlist item and verify ownership
-    const watchlistItem = await prisma.watchlistItem.findUnique({
-        where: { id: req.params.id },
+    const updatedItem = await updateItem(req.user.id, req.params.id, {
+      status,
+      rating,
+      notes,
     });
 
-    if (!watchlistItem) {
-        return res.status(404).json({ error: "Watchlist item not found" });
+    return sendSuccess(res, {
+      message: "Watchlist item updated successfully",
+      data: { watchlistItem: updatedItem },
+    });
+  } catch (error) {
+    if (error?.status) {
+      return sendError(res, { statusCode: error.status, message: error.message });
     }
-
-    // Ensure only owner can update
-    if (watchlistItem.userId !== req.user.id) {
-        return res
-            .status(403)
-            .json({ error: "Not allowed to update this watchlist item" });
-    }
-
-    // Build update data
-    const updateData = {};
-    if (status !== undefined) updateData.status = status.toUpperCase();
-    if (rating !== undefined) updateData.rating = rating;
-    if (notes !== undefined) updateData.notes = notes;
-
-    // Update watchlist item
-    const updatedItem = await prisma.watchlistItem.update({
-        where: { id: req.params.id },
-        data: updateData,
-    });
-
-    res.status(200).json({
-        status: "success",
-        data: {
-            watchlistItem: updatedItem,
-        },
-    });
+    return sendError(res);
+  }
 };
 
 /**
@@ -96,64 +63,40 @@ const updateWatchlistItem = async (req, res) => {
  * Requires protect middleware
  */
 const removeFromWatchlist = async (req, res) => {
-    // Find watchlist item and verify ownership
-    const watchlistItem = await prisma.watchlistItem.findUnique({
-        where: { id: req.params.id },
-    });
+  try {
+    await removeItem(req.user.id, req.params.id);
 
-    if (!watchlistItem) {
-        return res.status(404).json({ error: "Watchlist item not found" });
+    return sendSuccess(res, { message: "Movie removed from watchlist" });
+  } catch (error) {
+    if (error?.status) {
+      return sendError(res, { statusCode: error.status, message: error.message });
     }
-
-    // Ensure only owner can delete
-    if (watchlistItem.userId !== req.user.id) {
-        return res
-            .status(403)
-            .json({ error: "Not allowed to update this watchlist item" });
-    }
-
-    await prisma.watchlistItem.delete({
-        where: { id: req.params.id },
-    });
-
-    res.status(200).json({
-        status: "success",
-        message: "Movie removed from watchlist",
-    });
+    return sendError(res);
+  }
 };
 
 const getWatchlist = async (req, res) => {
+  try {
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
-    const skip = (page - 1) * limit;
 
-    const [total, watchlistItems] = await Promise.all([
-        prisma.watchlistItem.count({
-            where: { userId: req.user.id },
-        }),
-        prisma.watchlistItem.findMany({
-            where: { userId: req.user.id },
-            include: { movie: true },
-            orderBy: { createdAt: "desc" },
-            skip,
-            take: limit,
-        }),
-    ]);
+    const data = await getItems(req.user.id, { page, limit });
 
-    res.status(200).json({
-        status: "success",
-        data: {
-            watchlist: watchlistItems,
-            pagination: {
-                total,
-                page,
-                limit,
-                totalPages: Math.ceil(total / limit),
-                hasNextPage: page * limit < total,
-                hasPrevPage: page > 1,
-            },
-        },
+    return sendSuccess(res, {
+      message: "Watchlist fetched successfully",
+      data,
     });
+  } catch (error) {
+    if (error?.status) {
+      return sendError(res, { statusCode: error.status, message: error.message });
+    }
+    return sendError(res);
+  }
 };
 
-export { addToWatchlist, updateWatchlistItem, removeFromWatchlist, getWatchlist };
+export {
+  addToWatchlist,
+  updateWatchlistItem,
+  removeFromWatchlist,
+  getWatchlist,
+};

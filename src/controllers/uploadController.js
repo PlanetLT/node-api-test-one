@@ -1,14 +1,25 @@
+import { buildImageUploadResponse } from "../services/uploadService.js";
+import { sendSuccess, sendError } from "../utils/apiResponse.js";
+
 const uploadImageFile = async (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ message: "Image file is required. Use form-data key: image" });
+    try {
+        const payload = buildImageUploadResponse({
+            protocol: req.protocol,
+            host: req.get("host"),
+            filename: req.file?.filename,
+        });
+
+        return sendSuccess(res, {
+            statusCode: 201,
+            message: payload.message,
+            data: { imagePath: payload.imagePath },
+        });
+    } catch (error) {
+        if (error?.status) {
+            return sendError(res, { statusCode: error.status, message: error.message });
+        }
+        return sendError(res);
     }
-
-    const imagePath = `${req.protocol}://${req.get("host")}/uploads/images/${req.file.filename}`;
-
-    return res.status(201).json({
-        message: "Image uploaded successfully",
-        imagePath,
-    });
 };
 
 export { uploadImageFile };

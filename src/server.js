@@ -1,4 +1,6 @@
 import express from 'express';
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import movieRoute from './routes/movieRoute.js';
 import authRoute from './routes/authRoute.js';
 import watchlistRoute from './routes/watchlistRoute.js';
@@ -7,14 +9,31 @@ import { config } from 'dotenv';
 import { connectDB, disconnectDB } from './config/db.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { sendError } from "./utils/apiResponse.js";
 
 config();
 
 const app = express();
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per window
+    handler: (_req, res) => {
+        return sendError(res, {
+            statusCode: 429,
+            message: "Too many requests from this IP, please try again later.",
+        });
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+//For file upload path
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);// project/src
 
 //Body Passing Middleware
+app.use(helmet());
+app.use(apiLimiter);
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));//path.resolve(__dirname, '../uploads')=project/upload

@@ -1,80 +1,50 @@
 
-import { prisma } from "../config/db.js";
-import bcrypt from "bcryptjs";
 import { generateToken } from "../utils/generateToken.js";
+import { registerUser, loginUser } from "../services/authService.js";
+import { sendSuccess, sendError } from "../utils/apiResponse.js";
 
 const register = async (req, res) => {
     try {
         const { name, email, password } = req.body ?? {};
-
-        if (!name || !email || !password) {
-            return res.status(400).json({ message: "name, email, and password are required" });
-        }
-
-        //check if user already exists
-        const existingUser = await prisma.user.findUnique({ where: { email } });
-        if (existingUser) {
-            return res.status(400).json({ message: "User already exists" });
-        }
-
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        //create new user
-        const user = await prisma.user.create({
-            data: {
-                name,
-                email,
-                password: hashedPassword
-            }
-        });
+        const user = await registerUser({ name, email, password });
         const token = generateToken(user.id, res);
-        return res.status(201).json({
+        return sendSuccess(res, {
+            statusCode: 201,
             message: "User registered successfully",
-            user: { id: user.id, name: user.name, email: user.email },
-            token
+            data: { user, token },
         });
     } catch (error) {
         console.error("Register error:", error);
-        if (error?.code === "ECONNREFUSED") {
-            return res.status(503).json({ message: "Database is unavailable. Please try again later." });
+        if (error?.status) {
+            return sendError(res, { statusCode: error.status, message: error.message });
         }
-        return res.status(500).json({ message: "Internal server error" });
+        if (error?.code === "ECONNREFUSED") {
+            return sendError(res, { statusCode: 503, message: "Database is unavailable. Please try again later." });
+        }
+        return sendError(res);
     }
 };
 
 const login = async (req, res) => {
     try {
         const { email, password } = req.body ?? {};
+        const user = await loginUser({ email, password });
+        const token = generateToken(user.id, res);
 
-        if (!email || !password) {
-            return res.status(400).json({ message: "name, email, and password are required" });
-        }
-
-        //check if user already exists
-        const existingUser = await prisma.user.findUnique({ where: { email } });
-        if (!existingUser) {
-            return res.status(400).json({ message: "User does not exist" });
-        }
-
-        const isPasswordValid = await bcrypt.compare(password, existingUser.password);
-        if (!isPasswordValid) {
-            return res.status(400).json({ message: "Invalid password" });
-        }
-
-        const token = generateToken(existingUser.id, res);
-
-        return res.status(201).json({
+        return sendSuccess(res, {
+            statusCode: 201,
             message: "User logged in successfully",
-            user: { id: existingUser.id, name: existingUser.name, email: existingUser.email },
-            token
+            data: { user, token },
         });
     } catch (error) {
         console.error("Login error:", error);
-        if (error?.code === "ECONNREFUSED") {
-            return res.status(503).json({ message: "Database is unavailable. Please try again later." });
+        if (error?.status) {
+            return sendError(res, { statusCode: error.status, message: error.message });
         }
-        return res.status(500).json({ message: "Internal server error" });
+        if (error?.code === "ECONNREFUSED") {
+            return sendError(res, { statusCode: 503, message: "Database is unavailable. Please try again later." });
+        }
+        return sendError(res);
     }
 };
 
@@ -84,7 +54,7 @@ const logout = (req, res) => {
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
     });
-    return res.status(200).json({ message: "User logged out successfully" });
+    return sendSuccess(res, { message: "User logged out successfully" });
 }
 
 

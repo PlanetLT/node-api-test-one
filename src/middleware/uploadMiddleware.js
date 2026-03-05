@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import multer from "multer";
 import { fileURLToPath } from "url";
+import { sendError } from "../utils/apiResponse.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,10 +45,10 @@ const uploadImage = (req, res, next) => {
         }
 
         if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
-            return res.status(400).json({ message: "Image size must be less than or equal to 5MB" });
+            return sendError(res, { statusCode: 400, message: "Image size must be less than or equal to 5MB" });
         }
 
-        return res.status(400).json({ message: error.message || "Image upload failed" });
+        return sendError(res, { statusCode: 400, message: error.message || "Image upload failed" });
     });
 };
 
