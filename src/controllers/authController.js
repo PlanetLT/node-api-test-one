@@ -2,19 +2,21 @@
 import { generateToken } from "../utils/generateToken.js";
 import { registerUser, loginUser } from "../services/authService.js";
 import { sendSuccess, sendError } from "../utils/apiResponse.js";
+import { auditLogger, securityLogger } from "../utils/logger.js";
 
 const register = async (req, res) => {
     try {
         const { name, email, password } = req.body ?? {};
         const user = await registerUser({ name, email, password });
         const token = generateToken(user.id, res);
+        auditLogger.info({ userId: user.id, email: user.email }, "User registered");
         return sendSuccess(res, {
             statusCode: 201,
             message: "User registered successfully",
             data: { user, token },
         });
     } catch (error) {
-        console.error("Register error:", error);
+        securityLogger.error({ err: error, email: req.body?.email }, "Register error");
         if (error?.status) {
             return sendError(res, { statusCode: error.status, message: error.message });
         }
@@ -30,6 +32,7 @@ const login = async (req, res) => {
         const { email, password } = req.body ?? {};
         const user = await loginUser({ email, password });
         const token = generateToken(user.id, res);
+        auditLogger.info({ userId: user.id, email: user.email }, "User logged in");
 
         return sendSuccess(res, {
             statusCode: 201,
@@ -37,7 +40,7 @@ const login = async (req, res) => {
             data: { user, token },
         });
     } catch (error) {
-        console.error("Login error:", error);
+        securityLogger.warn({ err: error, email: req.body?.email }, "Login error");
         if (error?.status) {
             return sendError(res, { statusCode: error.status, message: error.message });
         }
@@ -54,6 +57,10 @@ const logout = (req, res) => {
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
     });
+    auditLogger.info(
+        { userId: req.user?.id || null, email: req.user?.email || null },
+        "User logged out"
+    );
     return sendSuccess(res, { message: "User logged out successfully" });
 }
 

@@ -10,6 +10,7 @@ import { connectDB, disconnectDB } from './config/db.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { sendError } from "./utils/apiResponse.js";
+import { logger, requestLogger } from "./utils/logger.js";
 
 config();
 
@@ -32,6 +33,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);// project/src
 
 //Body Passing Middleware
+app.use(requestLogger);
 app.use(helmet());
 app.use(apiLimiter);
 app.use(express.json());
@@ -51,7 +53,7 @@ let server;
 const startServer = async () => {
     await connectDB();
     server = app.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
+        logger.info({ port: PORT }, "Server started");
     });
 };
 
@@ -59,7 +61,7 @@ startServer();
 
 // Handle unhandled promise rejections(e.g. database connection errors)
 process.on("unhandledRejection", (err) => {
-    console.error("Unhandled Rejection:", err);
+    logger.error({ err }, "Unhandled rejection");
     if (server) {
         server.close(async () => {
             await disconnectDB();
@@ -72,14 +74,14 @@ process.on("unhandledRejection", (err) => {
 
 // Handle uncaught exceptions
 process.on("uncaughtException", async (err) => {
-    console.error("Uncaught Exception:", err);
+    logger.fatal({ err }, "Uncaught exception");
     await disconnectDB();
     process.exit(1);
 });
 
 // Handle SIGTERM for graceful shutdown
 process.on("SIGTERM", (err) => {
-    console.error("SIGTERM received:", err);
+    logger.warn({ err }, "SIGTERM received");
     if (server) {
         server.close(async () => {
             await disconnectDB();

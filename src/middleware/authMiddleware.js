@@ -1,10 +1,15 @@
 import jwt from "jsonwebtoken";
 import { prisma } from "../config/db.js";
 import { sendError } from "../utils/apiResponse.js";
+import { securityLogger } from "../utils/logger.js";
 
 export const authMiddleware = async (req, res, next) => {
     const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
     if (!token) {
+        securityLogger.warn(
+            { ip: req.ip, path: req.originalUrl },
+            "Missing authentication token"
+        );
         return sendError(res, { statusCode: 401, message: "No token provided, authorization denied" });
     }
 
@@ -12,12 +17,19 @@ export const authMiddleware = async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await prisma.user.findUnique({ where: { id: decoded.id } });
         if (!user) {
+            securityLogger.warn(
+                { userId: decoded.id, ip: req.ip, path: req.originalUrl },
+                "Token user not found"
+            );
             return sendError(res, { statusCode: 401, message: "User not found, authorization denied" });
         }
         req.user = user; // Attach user to request object
         next();
     } catch (error) {
-        console.error("Auth middleware error:", error);
+        securityLogger.warn(
+            { err: error, ip: req.ip, path: req.originalUrl },
+            "Auth middleware token verification failed"
+        );
         return sendError(res, { statusCode: 401, message: "Invalid token, authorization denied" });
     }
 

@@ -5,6 +5,7 @@ import { PrismaClient } from "@prisma/client";
 // "@prisma/adapter-pg" driver adapter and pass our DATABASE_URL.
 // See: https://pris.ly/d/client-constructor
 import { PrismaPg } from "@prisma/adapter-pg";
+import { logger } from "../utils/logger.js";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -20,12 +21,15 @@ const prisma = new PrismaClient({
 const connectDB= async()=>{
     try {
         await prisma.$connect();
-        console.log("Database connected successfully");
+        logger.info("Database connected successfully");
     } catch (error) {
         if (error?.code === "ECONNREFUSED") {
-            console.error("Error connecting to the database: connection refused. Verify DATABASE_URL host/port and that Postgres is reachable.");
+            logger.error(
+                { err: error },
+                "Database connection refused. Verify DATABASE_URL host/port and Postgres reachability."
+            );
         } else {
-            console.error("Error connecting to the database:", error);
+            logger.error({ err: error }, "Error connecting to database");
         }
         process.exit(1);
     }
