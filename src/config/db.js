@@ -1,11 +1,13 @@
 import "dotenv/config";
-import { PrismaClient } from "@prisma/client";
+import prismaClientPkg from "@prisma/client";
 // Prisma 7's new "client" engine requires either an adapter or an accelerateUrl.
 // For a normal Node.js project connecting to PostgreSQL we use the
 // "@prisma/adapter-pg" driver adapter and pass our DATABASE_URL.
 // See: https://pris.ly/d/client-constructor
 import { PrismaPg } from "@prisma/adapter-pg";
 import { logger } from "../utils/logger.js";
+
+const { PrismaClient } = prismaClientPkg;
 
 const connectionString = process.env.DATABASE_URL;
 
