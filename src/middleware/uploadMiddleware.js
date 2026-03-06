@@ -6,7 +6,10 @@ import { sendError } from "../utils/apiResponse.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const uploadsDir = path.resolve(__dirname, "../../uploads/images");
+const isVercel = Boolean(process.env.VERCEL);
+const uploadsDir = isVercel
+    ? path.resolve("/tmp/uploads/images")
+    : path.resolve(__dirname, "../../uploads/images");
 
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });

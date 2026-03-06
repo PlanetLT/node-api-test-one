@@ -31,6 +31,10 @@ const apiLimiter = rateLimit({
 //For file upload path
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);// project/src
+const isVercel = Boolean(process.env.VERCEL);
+const staticUploadsDir = isVercel
+    ? path.resolve("/tmp/uploads")
+    : path.resolve(__dirname, "../uploads");
 
 //Body Passing Middleware
 app.use(requestLogger);
@@ -38,7 +42,7 @@ app.use(helmet());
 app.use(apiLimiter);
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
-app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));//path.resolve(__dirname, '../uploads')=project/upload
+app.use('/uploads', express.static(staticUploadsDir));
 
 //API Routes
 app.use('/movies', movieRoute);
@@ -48,7 +52,6 @@ app.use('/upload', uploadRoute);
 
 
 const PORT = 5001;
-const isVercel = Boolean(process.env.VERCEL);
 let server;
 
 const startServer = async () => {
