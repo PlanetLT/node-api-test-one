@@ -9,6 +9,7 @@ import { fileURLToPath } from "url";
 const isDevelopment = process.env.NODE_ENV !== "production";
 const isVercel = Boolean(process.env.VERCEL);
 const shouldWriteFiles = !isVercel && process.env.LOG_TO_FILES !== "false";
+const usePrettyTransport = isDevelopment && !isVercel && process.env.PINO_PRETTY !== "false";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,18 +44,22 @@ const createDailyFileStream = (filename) =>
 const buildStreams = (fileName) => {
   const streams = [];
 
-  if (isDevelopment) {
-    streams.push({
-      stream: pino.transport({
-        target: "pino-pretty",
-        options: {
-          colorize: true,
-          singleLine: true,
-          translateTime: "SYS:standard",
-          ignore: "pid,hostname",
-        },
-      }),
-    });
+  if (usePrettyTransport) {
+    try {
+      streams.push({
+        stream: pino.transport({
+          target: "pino-pretty",
+          options: {
+            colorize: true,
+            singleLine: true,
+            translateTime: "SYS:standard",
+            ignore: "pid,hostname",
+          },
+        }),
+      });
+    } catch {
+      streams.push({ stream: process.stdout });
+    }
   } else {
     streams.push({ stream: process.stdout });
   }
