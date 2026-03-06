@@ -7,7 +7,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
-const shouldWriteFiles = process.env.LOG_TO_FILES !== "false";
+const isVercel = Boolean(process.env.VERCEL);
+const shouldWriteFiles = !isVercel && process.env.LOG_TO_FILES !== "false";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

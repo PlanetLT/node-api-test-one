@@ -48,6 +48,7 @@ app.use('/upload', uploadRoute);
 
 
 const PORT = 5001;
+const isVercel = Boolean(process.env.VERCEL);
 let server;
 
 const startServer = async () => {
@@ -57,37 +58,47 @@ const startServer = async () => {
     });
 };
 
-startServer();
+if (!isVercel) {
+    startServer();
+} else {
+    connectDB().catch((err) => {
+        logger.error({ err }, "Database initialization failed");
+    });
+}
 
-// Handle unhandled promise rejections(e.g. database connection errors)
-process.on("unhandledRejection", (err) => {
-    logger.error({ err }, "Unhandled rejection");
-    if (server) {
-        server.close(async () => {
-            await disconnectDB();
-            process.exit(1);
-        });
-        return;
-    }
-    process.exit(1);
-});
+if (!isVercel) {
+    // Handle unhandled promise rejections(e.g. database connection errors)
+    process.on("unhandledRejection", (err) => {
+        logger.error({ err }, "Unhandled rejection");
+        if (server) {
+            server.close(async () => {
+                await disconnectDB();
+                process.exit(1);
+            });
+            return;
+        }
+        process.exit(1);
+    });
 
-// Handle uncaught exceptions
-process.on("uncaughtException", async (err) => {
-    logger.fatal({ err }, "Uncaught exception");
-    await disconnectDB();
-    process.exit(1);
-});
+    // Handle uncaught exceptions
+    process.on("uncaughtException", async (err) => {
+        logger.fatal({ err }, "Uncaught exception");
+        await disconnectDB();
+        process.exit(1);
+    });
 
-// Handle SIGTERM for graceful shutdown
-process.on("SIGTERM", (err) => {
-    logger.warn({ err }, "SIGTERM received");
-    if (server) {
-        server.close(async () => {
-            await disconnectDB();
-            process.exit(0);
-        });
-        return;
-    }
-    process.exit(0);
-});
+    // Handle SIGTERM for graceful shutdown
+    process.on("SIGTERM", (err) => {
+        logger.warn({ err }, "SIGTERM received");
+        if (server) {
+            server.close(async () => {
+                await disconnectDB();
+                process.exit(0);
+            });
+            return;
+        }
+        process.exit(0);
+    });
+}
+
+export default app;
