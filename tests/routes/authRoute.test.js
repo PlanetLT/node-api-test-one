@@ -4,6 +4,7 @@ import { createMockRes } from "../helpers/httpMocks.js";
 vi.mock("../../src/controllers/authController.js", () => ({
   register: vi.fn((_req, res) => res.status(201).json({ ok: "register" })),
   login: vi.fn((_req, res) => res.status(201).json({ ok: "login" })),
+  refreshAccessToken: vi.fn((_req, res) => res.status(200).json({ ok: "refresh" })),
   logout: vi.fn((_req, res) => res.status(200).json({ ok: "logout" })),
 }));
 
@@ -54,5 +55,17 @@ describe("auth routes", () => {
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(authController.logout).toHaveBeenCalled();
+  });
+
+  it("POST /refresh is wired", () => {
+    const layer = findRouteLayer("/refresh", "post");
+    expect(layer).toBeTruthy();
+
+    const req = {};
+    const res = createMockRes();
+    layer.route.stack[0].handle(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(authController.refreshAccessToken).toHaveBeenCalled();
   });
 });

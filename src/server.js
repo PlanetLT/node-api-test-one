@@ -11,6 +11,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { sendError } from "./utils/apiResponse.js";
 import { logger, requestLogger } from "./utils/logger.js";
+import { methodNotAllowedMiddleware, notFoundMiddleware } from "./middleware/methodNotAllowedMiddleware.js";
 
 config();
 
@@ -49,10 +50,12 @@ const configureMiddleware = () => {
 };
 
 const configureRoutes = () => {
+    app.use(methodNotAllowedMiddleware);
     app.use("/movies", movieRoute);
     app.use("/auth", authRoute);
     app.use("/watchlist", watchlistRoute);
     app.use("/upload", uploadRoute);
+    app.use(notFoundMiddleware);
 };
 
 const closeServerAndExit = (exitCode) => {

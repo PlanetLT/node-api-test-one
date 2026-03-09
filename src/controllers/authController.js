@@ -1,7 +1,22 @@
-import { generateToken } from "../utils/generateToken.js";
-import { registerUser, loginUser } from "../services/authService.js";
+import {
+    createRefreshTokenSession,
+    findActiveRefreshToken,
+    loginUser,
+    registerUser,
+    revokeAllUserRefreshTokens,
+    revokeRefreshTokenByHash,
+} from "../services/authService.js";
 import { sendSuccess, sendError } from "../utils/apiResponse.js";
 import { auditLogger, securityLogger } from "../utils/logger.js";
+import {
+    clearAuthCookies,
+    extractRefreshToken,
+    hashToken,
+    setAuthCookies,
+    signAccessToken,
+    signRefreshToken,
+    verifyRefreshToken,
+} from "../utils/tokenService.js";
 
 const sendAuthError = (res, error) => {
     if (error?.status) {
@@ -18,16 +33,38 @@ const sendAuthError = (res, error) => {
     return sendError(res);
 };
 
+const createTokenPair = (userId) => {
+    const accessToken = signAccessToken(userId);
+    const refreshToken = signRefreshToken(userId);
+    return { accessToken, refreshToken };
+};
+
+const getRefreshTokenExpiryDate = () => {
+    const fallbackMs = 7 * 24 * 60 * 60 * 1000;
+    const configuredMs = Number(process.env.REFRESH_TOKEN_COOKIE_MAX_AGE_MS) || fallbackMs;
+    return new Date(Date.now() + configuredMs);
+};
+
+const persistRefreshToken = async ({ userId, refreshToken }) => {
+    await createRefreshTokenSession({
+        userId,
+        tokenHash: hashToken(refreshToken),
+        expiresAt: getRefreshTokenExpiryDate(),
+    });
+};
+
 const register = async (req, res) => {
     try {
         const { name, email, password } = req.body ?? {};
         const user = await registerUser({ name, email, password });
-        const token = generateToken(user.id, res);
+        const { accessToken, refreshToken } = createTokenPair(user.id);
+        await persistRefreshToken({ userId: user.id, refreshToken });
+        setAuthCookies(res, { accessToken, refreshToken });
         auditLogger.info({ userId: user.id, email: user.email }, "User registered");
         return sendSuccess(res, {
             statusCode: 201,
             message: "User registered successfully",
-            data: { user, token },
+            data: { user, accessToken },
         });
     } catch (error) {
         securityLogger.error({ err: error, email: req.body?.email }, "Register error");
@@ -39,13 +76,15 @@ const login = async (req, res) => {
     try {
         const { email, password } = req.body ?? {};
         const user = await loginUser({ email, password });
-        const token = generateToken(user.id, res);
+        const { accessToken, refreshToken } = createTokenPair(user.id);
+        await persistRefreshToken({ userId: user.id, refreshToken });
+        setAuthCookies(res, { accessToken, refreshToken });
         auditLogger.info({ userId: user.id, email: user.email }, "User logged in");
 
         return sendSuccess(res, {
             statusCode: 201,
             message: "User logged in successfully",
-            data: { user, token },
+            data: { user, accessToken },
         });
     } catch (error) {
         securityLogger.warn({ err: error, email: req.body?.email }, "Login error");
@@ -53,12 +92,61 @@ const login = async (req, res) => {
     }
 };
 
-const logout = (req, res) => {
-    res.clearCookie("token", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-    });
+const refreshAccessToken = async (req, res) => {
+    try {
+        const refreshToken = extractRefreshToken(req);
+        if (!refreshToken) {
+            return sendError(res, { statusCode: 401, message: "Refresh token is required" });
+        }
+
+        const decoded = verifyRefreshToken(refreshToken);
+        const tokenHash = hashToken(refreshToken);
+        const activeRefreshToken = await findActiveRefreshToken({
+            userId: decoded.id,
+            tokenHash,
+        });
+
+        if (!activeRefreshToken) {
+            return sendError(res, { statusCode: 401, message: "Invalid refresh token" });
+        }
+
+        await revokeRefreshTokenByHash({ userId: decoded.id, tokenHash });
+
+        const nextAccessToken = signAccessToken(decoded.id);
+        const nextRefreshToken = signRefreshToken(decoded.id);
+        await persistRefreshToken({ userId: decoded.id, refreshToken: nextRefreshToken });
+        setAuthCookies(res, { accessToken: nextAccessToken, refreshToken: nextRefreshToken });
+
+        return sendSuccess(res, {
+            message: "Access token refreshed successfully",
+            data: { accessToken: nextAccessToken },
+        });
+    } catch (error) {
+        securityLogger.warn({ err: error, ip: req.ip }, "Refresh token error");
+        return sendError(res, { statusCode: 401, message: "Invalid or expired refresh token" });
+    }
+};
+
+const logout = async (req, res) => {
+    try {
+        const refreshToken = extractRefreshToken(req);
+        if (refreshToken) {
+            try {
+                const decoded = verifyRefreshToken(refreshToken);
+                await revokeRefreshTokenByHash({
+                    userId: decoded.id,
+                    tokenHash: hashToken(refreshToken),
+                });
+            } catch (_error) {
+                // Continue logout even if refresh token cannot be decoded.
+            }
+        } else if (req.user?.id) {
+            await revokeAllUserRefreshTokens(req.user.id);
+        }
+    } finally {
+        clearAuthCookies(res);
+    }
+
     auditLogger.info(
         { userId: req.user?.id || null, email: req.user?.email || null },
         "User logged out"
@@ -66,4 +154,4 @@ const logout = (req, res) => {
     return sendSuccess(res, { message: "User logged out successfully" });
 };
 
-export { register, login, logout };
+export { register, login, refreshAccessToken, logout };

@@ -2,9 +2,13 @@ import jwt from "jsonwebtoken";
 import { prisma } from "../config/db.js";
 import { sendError } from "../utils/apiResponse.js";
 import { securityLogger } from "../utils/logger.js";
+import { extractAccessToken } from "../utils/tokenService.js";
+
+const accessTokenSecret =
+    process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET;
 
 export const authMiddleware = async (req, res, next) => {
-    const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
+    const token = extractAccessToken(req);
     if (!token) {
         securityLogger.warn(
             { ip: req.ip, path: req.originalUrl },
@@ -14,7 +18,7 @@ export const authMiddleware = async (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, accessTokenSecret);
         const user = await prisma.user.findUnique({ where: { id: decoded.id } });
         if (!user) {
             securityLogger.warn(

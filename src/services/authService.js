@@ -49,4 +49,55 @@ const loginUser = async ({ email, password }) => {
     };
 };
 
-export { registerUser, loginUser };
+const createRefreshTokenSession = async ({ userId, tokenHash, expiresAt }) =>
+    prisma.refreshToken.create({
+        data: {
+            userId,
+            tokenHash,
+            expiresAt,
+        },
+    });
+
+const findActiveRefreshToken = async ({ userId, tokenHash }) =>
+    prisma.refreshToken.findFirst({
+        where: {
+            userId,
+            tokenHash,
+            revokedAt: null,
+            expiresAt: {
+                gt: new Date(),
+            },
+        },
+    });
+
+const revokeRefreshTokenByHash = async ({ userId, tokenHash }) =>
+    prisma.refreshToken.updateMany({
+        where: {
+            userId,
+            tokenHash,
+            revokedAt: null,
+        },
+        data: {
+            revokedAt: new Date(),
+        },
+    });
+
+const revokeAllUserRefreshTokens = async (userId) =>
+    prisma.refreshToken.updateMany({
+        where: {
+            userId,
+            revokedAt: null,
+        },
+        data: {
+            revokedAt: new Date(),
+        },
+    });
+
+export {
+    registerUser,
+    loginUser,
+    createRefreshTokenSession,
+    findActiveRefreshToken,
+    revokeRefreshTokenByHash,
+    revokeAllUserRefreshTokens,
+};
