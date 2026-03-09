@@ -6,6 +6,9 @@ import middleware from "i18next-http-middleware";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const localesPathTemplate = process.env.VERCEL
+  ? path.join(process.cwd(), "locales/{{lng}}.json")
+  : path.resolve(__dirname, "../locales/{{lng}}.json");
 
 i18next
   .use(Backend)
@@ -17,7 +20,7 @@ i18next
     ns: ["translation"],
     defaultNS: "translation",
     backend: {
-      loadPath: path.resolve(__dirname, "../locales/{{lng}}.json"),
+      loadPath: localesPathTemplate,
     },
     detection: {
       order: ["header", "querystring", "cookie"],
