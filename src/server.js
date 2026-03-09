@@ -1,20 +1,30 @@
-import express from 'express';
+import express from "express";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import movieRoute from './routes/movieRoute.js';
-import authRoute from './routes/authRoute.js';
-import watchlistRoute from './routes/watchlistRoute.js';
-import uploadRoute from './routes/uploadRoute.js';
-import { config } from 'dotenv';
-import { connectDB, disconnectDB } from './config/db.js';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import movieRoute from "./routes/movieRoute.js";
+import authRoute from "./routes/authRoute.js";
+import watchlistRoute from "./routes/watchlistRoute.js";
+import uploadRoute from "./routes/uploadRoute.js";
+import { config } from "dotenv";
+import { connectDB, disconnectDB } from "./config/db.js";
+import path from "path";
+import { fileURLToPath } from "url";
 import { sendError } from "./utils/apiResponse.js";
 import { logger, requestLogger } from "./utils/logger.js";
 
 config();
 
+const isVercel = Boolean(process.env.VERCEL);
+const port = Number(process.env.PORT) || 5001;
 const app = express();
+let server;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const staticUploadsDir = isVercel
+    ? path.resolve("/tmp/uploads")
+    : path.resolve(__dirname, "../uploads");
+
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // limit each IP to 100 requests per window
@@ -28,80 +38,76 @@ const apiLimiter = rateLimit({
     legacyHeaders: false,
 });
 
-//For file upload path
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);// project/src
-const isVercel = Boolean(process.env.VERCEL);
-const staticUploadsDir = isVercel
-    ? path.resolve("/tmp/uploads")
-    : path.resolve(__dirname, "../uploads");
+const configureMiddleware = () => {
+    app.use(requestLogger);
+    app.use(helmet());
+    app.use(apiLimiter);
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
+    // Vercel can only write to /tmp; local runtime uses project uploads directory.
+    app.use("/uploads", express.static(staticUploadsDir));
+};
 
-//Body Passing Middleware
-app.use(requestLogger);
-app.use(helmet());
-app.use(apiLimiter);
-app.use(express.json());
-app.use(express.urlencoded({extended:true}));
-app.use('/uploads', express.static(staticUploadsDir));
+const configureRoutes = () => {
+    app.use("/movies", movieRoute);
+    app.use("/auth", authRoute);
+    app.use("/watchlist", watchlistRoute);
+    app.use("/upload", uploadRoute);
+};
 
-//API Routes
-app.use('/movies', movieRoute);
-app.use('/auth', authRoute);
-app.use('/watchlist', watchlistRoute);
-app.use('/upload', uploadRoute);
+const closeServerAndExit = (exitCode) => {
+    if (!server) {
+        process.exit(exitCode);
+        return;
+    }
 
-
-const PORT = 5001;
-let server;
-
-const startServer = async () => {
-    await connectDB();
-    server = app.listen(PORT, () => {
-        logger.info({ port: PORT }, "Server started");
+    server.close(async () => {
+        await disconnectDB();
+        process.exit(exitCode);
     });
 };
 
-if (!isVercel) {
-    startServer();
-} else {
-    connectDB().catch((err) => {
-        logger.error({ err }, "Database initialization failed");
-    });
-}
-
-if (!isVercel) {
-    // Handle unhandled promise rejections(e.g. database connection errors)
+const registerProcessHandlers = () => {
     process.on("unhandledRejection", (err) => {
         logger.error({ err }, "Unhandled rejection");
-        if (server) {
-            server.close(async () => {
-                await disconnectDB();
-                process.exit(1);
-            });
-            return;
-        }
-        process.exit(1);
+        closeServerAndExit(1);
     });
 
-    // Handle uncaught exceptions
     process.on("uncaughtException", async (err) => {
         logger.fatal({ err }, "Uncaught exception");
         await disconnectDB();
         process.exit(1);
     });
 
-    // Handle SIGTERM for graceful shutdown
     process.on("SIGTERM", (err) => {
         logger.warn({ err }, "SIGTERM received");
-        if (server) {
-            server.close(async () => {
-                await disconnectDB();
-                process.exit(0);
-            });
-            return;
-        }
-        process.exit(0);
+        closeServerAndExit(0);
     });
-}
+};
+
+const initializeRuntime = async () => {
+    configureMiddleware();
+    configureRoutes();
+
+    if (isVercel) {
+        connectDB().catch((err) => {
+            logger.error({ err }, "Database initialization failed");
+        });
+        return;
+    }
+
+    registerProcessHandlers();
+    await connectDB();
+    server = app.listen(port, () => {
+        logger.info({ port }, "Server started");
+    });
+};
+
+initializeRuntime().catch((err) => {
+    logger.fatal({ err }, "Runtime initialization failed");
+    if (!isVercel) {
+        process.exit(1);
+    }
+});
 
 export default app;

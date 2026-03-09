@@ -11,12 +11,16 @@ const uploadsDir = isVercel
     ? path.resolve("/tmp/uploads/images")
     : path.resolve(__dirname, "../../uploads/images");
 
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-}
+const ensureUploadsDirectory = () => {
+    if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+};
 
 const storage = multer.diskStorage({
     destination: (_req, _file, cb) => {
+        // Resolve directory at request time to avoid module-load crashes in constrained runtimes.
+        ensureUploadsDirectory();
         cb(null, uploadsDir);
     },
     filename: (_req, file, cb) => {

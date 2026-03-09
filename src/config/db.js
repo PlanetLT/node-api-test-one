@@ -1,26 +1,43 @@
 import "dotenv/config";
 import prismaClientPkg from "@prisma/client";
-// Prisma 7's new "client" engine requires either an adapter or an accelerateUrl.
-// For a normal Node.js project connecting to PostgreSQL we use the
-// "@prisma/adapter-pg" driver adapter and pass our DATABASE_URL.
-// See: https://pris.ly/d/client-constructor
 import { PrismaPg } from "@prisma/adapter-pg";
 import { logger } from "../utils/logger.js";
 
 const { PrismaClient } = prismaClientPkg;
-
+const isDevelopment = process.env.NODE_ENV === "development";
 const connectionString = process.env.DATABASE_URL;
 
-if (!connectionString) {
-    throw new Error("DATABASE_URL is not set");
-}
+const createDbConfigError = () => {
+    const error = new Error("DATABASE_URL is not set");
+    error.code = "DB_NOT_CONFIGURED";
+    return error;
+};
 
-const prisma = new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-    adapter: new PrismaPg({ connectionString })
-});
+const createUnavailablePrismaClient = () =>
+    // This keeps imports alive and throws a meaningful error only when DB is actually used.
+    new Proxy(
+        {},
+        {
+            get() {
+                throw createDbConfigError();
+            },
+        }
+    );
 
-const connectDB= async()=>{
+const prisma = connectionString
+    ? new PrismaClient({
+          log: isDevelopment ? ["query", "error", "warn"] : ["error"],
+          adapter: new PrismaPg({ connectionString }),
+      })
+    : createUnavailablePrismaClient();
+
+const connectDB = async () => {
+    if (!connectionString) {
+        const error = createDbConfigError();
+        logger.error({ err: error }, "Database URL is missing");
+        throw error;
+    }
+
     try {
         await prisma.$connect();
         logger.info("Database connected successfully");
@@ -33,12 +50,15 @@ const connectDB= async()=>{
         } else {
             logger.error({ err: error }, "Error connecting to database");
         }
-        process.exit(1);
+        throw error;
     }
-}
+};
 
-const disconnectDB= async()=>{
+const disconnectDB = async () => {
+    if (!connectionString) {
+        return;
+    }
     await prisma.$disconnect();
-}
+};
 
-export {connectDB,prisma,disconnectDB};
+export { connectDB, prisma, disconnectDB };

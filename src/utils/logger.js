@@ -15,9 +15,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const logsDir = path.resolve(__dirname, "../../logs");
 
-if (shouldWriteFiles && !fs.existsSync(logsDir)) {
+const ensureLogsDirectory = () => {
+  if (!shouldWriteFiles || fs.existsSync(logsDir)) {
+    return;
+  }
   fs.mkdirSync(logsDir, { recursive: true });
-}
+};
+
+ensureLogsDirectory();
 
 const baseOptions = {
   level: process.env.LOG_LEVEL || "info",
@@ -41,23 +46,25 @@ const createDailyFileStream = (filename) =>
     size: "10M",
   });
 
+const createPrettyStream = () =>
+  pino.transport({
+    target: "pino-pretty",
+    options: {
+      colorize: true,
+      singleLine: true,
+      translateTime: "SYS:standard",
+      ignore: "pid,hostname",
+    },
+  });
+
 const buildStreams = (fileName) => {
   const streams = [];
 
   if (usePrettyTransport) {
     try {
-      streams.push({
-        stream: pino.transport({
-          target: "pino-pretty",
-          options: {
-            colorize: true,
-            singleLine: true,
-            translateTime: "SYS:standard",
-            ignore: "pid,hostname",
-          },
-        }),
-      });
+      streams.push({ stream: createPrettyStream() });
     } catch {
+      // If pretty transport cannot be resolved in a serverless bundle, continue with stdout.
       streams.push({ stream: process.stdout });
     }
   } else {
