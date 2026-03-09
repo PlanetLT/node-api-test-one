@@ -1,10 +1,5 @@
 import { prisma } from "../config/db.js";
-
-const createServiceError = (status, message) => {
-    const error = new Error(message);
-    error.status = status;
-    return error;
-};
+import { createServiceError } from "../utils/serviceError.js";
 
 const addItem = async (userId, { movieId, status, rating, notes }) => {
     const movie = await prisma.movie.findUnique({

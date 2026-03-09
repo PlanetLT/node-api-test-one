@@ -1,11 +1,6 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../config/db.js";
-
-const createServiceError = (status, message) => {
-    const error = new Error(message);
-    error.status = status;
-    return error;
-};
+import { createServiceError } from "../utils/serviceError.js";
 
 const registerUser = async ({ name, email, password }) => {
     const existingUser = await prisma.user.findUnique({ where: { email } });

@@ -1,8 +1,8 @@
+import { createServiceError } from "../utils/serviceError.js";
+
 const buildImageUploadResponse = ({ protocol, host, filename }) => {
     if (!filename) {
-        const error = new Error("Image file is required. Use form-data key: image");
-        error.status = 400;
-        throw error;
+        throw createServiceError(400, "Image file is required. Use form-data key: image");
     }
 
     return {
