@@ -13,7 +13,11 @@ export const validateRequest = (schema) => {
         .map((err) => err._errors)
         .flat();
 
-      return sendError(res, { statusCode: 400, message: flatErrors.join(", ") });
+      return sendError(res, {
+        statusCode: 400,
+        message: "validation_error_with_details",
+        messageParams: { details: flatErrors.join(", ") },
+      });
     }
 
     next();

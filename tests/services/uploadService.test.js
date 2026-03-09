@@ -10,7 +10,7 @@ describe("uploadService", () => {
     });
 
     expect(result).toEqual({
-      message: "Image uploaded successfully",
+      message: "file_upload_success",
       imagePath: "http://localhost:5001/uploads/images/abc.jpg",
     });
   });
@@ -21,6 +21,6 @@ describe("uploadService", () => {
         protocol: "http",
         host: "localhost:5001",
       })
-    ).toThrow("Image file is required. Use form-data key: image");
+    ).toThrow("image_file_required");
   });
 });

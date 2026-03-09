@@ -12,6 +12,8 @@ import { fileURLToPath } from "url";
 import { sendError } from "./utils/apiResponse.js";
 import { logger, requestLogger } from "./utils/logger.js";
 import { methodNotAllowedMiddleware, notFoundMiddleware } from "./middleware/methodNotAllowedMiddleware.js";
+import i18next from "./i18n.js";
+import i18nextMiddleware from "i18next-http-middleware";
 
 config();
 
@@ -32,7 +34,7 @@ const apiLimiter = rateLimit({
     handler: (_req, res) => {
         return sendError(res, {
             statusCode: 429,
-            message: "Too many requests from this IP, please try again later.",
+            message: "too_many_requests_from_ip",
         });
     },
     standardHeaders: true,
@@ -41,6 +43,7 @@ const apiLimiter = rateLimit({
 
 const configureMiddleware = () => {
     app.use(requestLogger);
+    app.use(i18nextMiddleware.handle(i18next));
     app.use(helmet());
     app.use(apiLimiter);
     app.use(express.json());

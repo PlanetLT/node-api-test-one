@@ -18,7 +18,7 @@ import {
     verifyRefreshToken,
 } from "../utils/tokenService.js";
 
-const sendAuthError = (res, error) => {
+const sendAuthError = (res, error, req) => {
     if (error?.status) {
         return sendError(res, { statusCode: error.status, message: error.message });
     }
@@ -26,7 +26,7 @@ const sendAuthError = (res, error) => {
     if (error?.code === "ECONNREFUSED" || error?.code === "DB_NOT_CONFIGURED") {
         return sendError(res, {
             statusCode: 503,
-            message: "Database is unavailable. Please try again later.",
+            message: "database_unavailable",
         });
     }
 
@@ -63,12 +63,12 @@ const register = async (req, res) => {
         auditLogger.info({ userId: user.id, email: user.email }, "User registered");
         return sendSuccess(res, {
             statusCode: 201,
-            message: "User registered successfully",
+            message: "user_registered",
             data: { user, accessToken },
         });
     } catch (error) {
         securityLogger.error({ err: error, email: req.body?.email }, "Register error");
-        return sendAuthError(res, error);
+        return sendAuthError(res, error, req);
     }
 };
 
@@ -83,12 +83,12 @@ const login = async (req, res) => {
 
         return sendSuccess(res, {
             statusCode: 201,
-            message: "User logged in successfully",
+            message: "login_success",
             data: { user, accessToken },
         });
     } catch (error) {
         securityLogger.warn({ err: error, email: req.body?.email }, "Login error");
-        return sendAuthError(res, error);
+        return sendAuthError(res, error, req);
     }
 };
 
@@ -96,7 +96,7 @@ const refreshAccessToken = async (req, res) => {
     try {
         const refreshToken = extractRefreshToken(req);
         if (!refreshToken) {
-            return sendError(res, { statusCode: 401, message: "Refresh token is required" });
+            return sendError(res, { statusCode: 401, message: "token_required" });
         }
 
         const decoded = verifyRefreshToken(refreshToken);
@@ -107,7 +107,7 @@ const refreshAccessToken = async (req, res) => {
         });
 
         if (!activeRefreshToken) {
-            return sendError(res, { statusCode: 401, message: "Invalid refresh token" });
+            return sendError(res, { statusCode: 401, message: "invalid_token" });
         }
 
         await revokeRefreshTokenByHash({ userId: decoded.id, tokenHash });
@@ -118,12 +118,12 @@ const refreshAccessToken = async (req, res) => {
         setAuthCookies(res, { accessToken: nextAccessToken, refreshToken: nextRefreshToken });
 
         return sendSuccess(res, {
-            message: "Access token refreshed successfully",
+            message: "access_token_refreshed",
             data: { accessToken: nextAccessToken },
         });
     } catch (error) {
         securityLogger.warn({ err: error, ip: req.ip }, "Refresh token error");
-        return sendError(res, { statusCode: 401, message: "Invalid or expired refresh token" });
+        return sendError(res, { statusCode: 401, message: "invalid_or_expired_refresh_token" });
     }
 };
 
@@ -151,7 +151,7 @@ const logout = async (req, res) => {
         { userId: req.user?.id || null, email: req.user?.email || null },
         "User logged out"
     );
-    return sendSuccess(res, { message: "User logged out successfully" });
+    return sendSuccess(res, { message: "user_logged_out" });
 };
 
 export { register, login, refreshAccessToken, logout };

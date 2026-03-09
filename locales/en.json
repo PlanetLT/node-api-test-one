@@ -1,0 +1,43 @@
+{
+  "success": "Success",
+  "internal_server_error": "Internal server error",
+  "database_unavailable": "Database is unavailable. Please try again later.",
+  "too_many_requests_from_ip": "Too many requests from this IP, please try again later.",
+  "validation_error_with_details": "Validation error: {{details}}",
+
+  "user_registered": "User registered successfully",
+  "login_success": "User logged in successfully",
+  "token_required": "Refresh token is required",
+  "invalid_token": "Invalid refresh token",
+  "invalid_or_expired_refresh_token": "Invalid or expired refresh token",
+  "access_token_refreshed": "Access token refreshed successfully",
+  "user_logged_out": "User logged out successfully",
+
+  "user_already_exists": "User already exists",
+  "email_and_password_required": "name, email, and password are required",
+  "user_does_not_exist": "User does not exist",
+  "invalid_password": "Invalid password",
+
+  "no_token_provided": "No token provided, authorization denied",
+  "user_not_found_auth_denied": "User not found, authorization denied",
+  "invalid_token_auth_denied": "Invalid token, authorization denied",
+
+  "file_upload_success": "Image uploaded successfully",
+  "file_upload_error": "Image upload failed",
+  "image_file_required": "Image file is required. Use form-data key: image",
+  "image_size_limit": "Image size must be less than or equal to 5MB",
+  "invalid_image_type": "Only image files are allowed",
+
+  "watchlist_item_created": "Watchlist item created successfully",
+  "watchlist_item_updated": "Watchlist item updated successfully",
+  "watchlist_fetched": "Watchlist fetched successfully",
+  "movie_removed": "Movie removed from watchlist",
+  "movie_not_found": "Movie not found",
+  "movie_already_in_watchlist": "Movie already in the watchlist",
+  "watchlist_item_not_found": "Watchlist item not found",
+  "not_allowed_to_update_watchlist_item": "Not allowed to update this watchlist item",
+
+  "movie_route_test": "Movie route test success",
+  "method_not_allowed_for_route": "Method {{method}} not allowed for {{path}}",
+  "route_not_found": "Route {{method}} {{path}} not found"
+}

@@ -34,7 +34,7 @@ describe("watchlistService", () => {
 
     await expect(addItem("u1", { movieId: "m1" })).rejects.toMatchObject({
       status: 404,
-      message: "Movie not found",
+      message: "movie_not_found",
     });
   });
 
@@ -56,7 +56,7 @@ describe("watchlistService", () => {
 
     await expect(updateItem("u1", "w1", { notes: "x" })).rejects.toMatchObject({
       status: 403,
-      message: "Not allowed to update this watchlist item",
+      message: "not_allowed_to_update_watchlist_item",
     });
   });
 

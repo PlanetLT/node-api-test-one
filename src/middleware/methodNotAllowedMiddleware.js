@@ -51,7 +51,11 @@ const methodNotAllowedMiddleware = (req, res, next) => {
     res.set("Allow", allowedMethods.join(", "));
     return sendError(res, {
         statusCode: 405,
-        message: `Method ${requestMethod} not allowed for ${requestPath}`,
+        message: "method_not_allowed_for_route",
+        messageParams: {
+            method: requestMethod,
+            path: requestPath,
+        },
         errors: { allowedMethods },
     });
 };
@@ -59,7 +63,11 @@ const methodNotAllowedMiddleware = (req, res, next) => {
 const notFoundMiddleware = (req, res) =>
     sendError(res, {
         statusCode: 404,
-        message: `Route ${req.method.toUpperCase()} ${normalizePath(req.path)} not found`,
+        message: "route_not_found",
+        messageParams: {
+            method: req.method.toUpperCase(),
+            path: normalizePath(req.path),
+        },
     });
 
 export { methodNotAllowedMiddleware, notFoundMiddleware };

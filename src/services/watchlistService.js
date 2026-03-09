@@ -7,7 +7,7 @@ const addItem = async (userId, { movieId, status, rating, notes }) => {
     });
 
     if (!movie) {
-        throw createServiceError(404, "Movie not found");
+        throw createServiceError(404, "movie_not_found");
     }
 
     const existingInWatchlist = await prisma.watchlistItem.findUnique({
@@ -20,7 +20,7 @@ const addItem = async (userId, { movieId, status, rating, notes }) => {
     });
 
     if (existingInWatchlist) {
-        throw createServiceError(400, "Movie already in the watchlist");
+        throw createServiceError(400, "movie_already_in_watchlist");
     }
 
     return prisma.watchlistItem.create({
@@ -40,11 +40,11 @@ const updateItem = async (userId, watchlistItemId, { status, rating, notes }) =>
     });
 
     if (!watchlistItem) {
-        throw createServiceError(404, "Watchlist item not found");
+        throw createServiceError(404, "watchlist_item_not_found");
     }
 
     if (watchlistItem.userId !== userId) {
-        throw createServiceError(403, "Not allowed to update this watchlist item");
+        throw createServiceError(403, "not_allowed_to_update_watchlist_item");
     }
 
     const updateData = {};
@@ -64,11 +64,11 @@ const removeItem = async (userId, watchlistItemId) => {
     });
 
     if (!watchlistItem) {
-        throw createServiceError(404, "Watchlist item not found");
+        throw createServiceError(404, "watchlist_item_not_found");
     }
 
     if (watchlistItem.userId !== userId) {
-        throw createServiceError(403, "Not allowed to update this watchlist item");
+        throw createServiceError(403, "not_allowed_to_update_watchlist_item");
     }
 
     await prisma.watchlistItem.delete({

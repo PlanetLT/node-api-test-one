@@ -1,0 +1,43 @@
+{
+  "success": "အောင်မြင်ပါသည်",
+  "internal_server_error": "ဆာဗာအတွင်းပိုင်း အမှား ဖြစ်ပွားခဲ့သည်",
+  "database_unavailable": "Database မရရှိနိုင်ပါ။ နောက်မှ ပြန်လည်စမ်းပါ။",
+  "too_many_requests_from_ip": "ဤ IP မှ တောင်းဆိုမှုများ များလွန်းနေပါသည်။ နောက်မှ ပြန်လည်စမ်းပါ။",
+  "validation_error_with_details": "အတည်ပြုမှု အမှား: {{details}}",
+
+  "user_registered": "အသုံးပြုသူ မှတ်ပုံတင်မှု အောင်မြင်ပါသည်",
+  "login_success": "အသုံးပြုသူ လော့ဂ်အင် အောင်မြင်ပါသည်",
+  "token_required": "Refresh token လိုအပ်ပါသည်",
+  "invalid_token": "Refresh token မှန်ကန်မှု မရှိပါ",
+  "invalid_or_expired_refresh_token": "Refresh token မှန်ကန်မှု မရှိခြင်း သို့မဟုတ် သက်တမ်းကုန်ဆုံးနေပါသည်",
+  "access_token_refreshed": "Access token ကို အောင်မြင်စွာ ပြန်လည်ထုတ်ပေးပြီးပါပြီ",
+  "user_logged_out": "အသုံးပြုသူ လော့ဂ်အောက် အောင်မြင်ပါသည်",
+
+  "user_already_exists": "အသုံးပြုသူ ရှိပြီးသား ဖြစ်ပါသည်",
+  "email_and_password_required": "name, email, and password လိုအပ်ပါသည်",
+  "user_does_not_exist": "အသုံးပြုသူ မရှိပါ",
+  "invalid_password": "Password မှားယွင်းနေပါသည်",
+
+  "no_token_provided": "Token မပေးထားသဖြင့် ခွင့်ပြုချက် မရပါ",
+  "user_not_found_auth_denied": "အသုံးပြုသူ မတွေ့ရှိသဖြင့် ခွင့်ပြုချက် မရပါ",
+  "invalid_token_auth_denied": "Token မမှန်ကန်သဖြင့် ခွင့်ပြုချက် မရပါ",
+
+  "file_upload_success": "ပုံကို အောင်မြင်စွာ တင်ပြီးပါပြီ",
+  "file_upload_error": "ပုံတင်ရာတွင် မအောင်မြင်ပါ",
+  "image_file_required": "ပုံဖိုင် လိုအပ်ပါသည်။ form-data key: image ကို အသုံးပြုပါ",
+  "image_size_limit": "ပုံဖိုင်အရွယ်အစားသည် 5MB ထက်မပိုရပါ",
+  "invalid_image_type": "ပုံဖိုင်အမျိုးအစားကိုသာ လက်ခံပါသည်",
+
+  "watchlist_item_created": "Watchlist item ဖန်တီးမှု အောင်မြင်ပါသည်",
+  "watchlist_item_updated": "Watchlist item ပြင်ဆင်မှု အောင်မြင်ပါသည်",
+  "watchlist_fetched": "Watchlist ကို အောင်မြင်စွာ ရယူပြီးပါပြီ",
+  "movie_removed": "Watchlist မှ movie ကို ဖယ်ရှားပြီးပါပြီ",
+  "movie_not_found": "Movie မတွေ့ရှိပါ",
+  "movie_already_in_watchlist": "Movie သည် watchlist ထဲတွင် ရှိပြီးသား ဖြစ်ပါသည်",
+  "watchlist_item_not_found": "Watchlist item မတွေ့ရှိပါ",
+  "not_allowed_to_update_watchlist_item": "ဤ watchlist item ကို ပြင်ဆင်ခွင့် မရှိပါ",
+
+  "movie_route_test": "Movie route စမ်းသပ်မှု အောင်မြင်ပါသည်",
+  "method_not_allowed_for_route": "{{path}} အတွက် {{method}} method ကို ခွင့်မပြုပါ",
+  "route_not_found": "{{method}} {{path}} route ကို မတွေ့ရှိပါ"
+}

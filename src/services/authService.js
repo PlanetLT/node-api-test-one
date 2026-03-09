@@ -5,7 +5,7 @@ import { createServiceError } from "../utils/serviceError.js";
 const registerUser = async ({ name, email, password }) => {
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-        throw createServiceError(400, "User already exists");
+        throw createServiceError(400, "user_already_exists");
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -24,17 +24,17 @@ const registerUser = async ({ name, email, password }) => {
 
 const loginUser = async ({ email, password }) => {
     if (!email || !password) {
-        throw createServiceError(400, "name, email, and password are required");
+        throw createServiceError(400, "email_and_password_required");
     }
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (!existingUser) {
-        throw createServiceError(400, "User does not exist");
+        throw createServiceError(400, "user_does_not_exist");
     }
 
     const isPasswordValid = await bcrypt.compare(password, existingUser.password);
     if (!isPasswordValid) {
-        throw createServiceError(400, "Invalid password");
+        throw createServiceError(400, "invalid_password");
     }
 
     return {

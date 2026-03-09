@@ -14,7 +14,7 @@ export const authMiddleware = async (req, res, next) => {
             { ip: req.ip, path: req.originalUrl },
             "Missing authentication token"
         );
-        return sendError(res, { statusCode: 401, message: "No token provided, authorization denied" });
+        return sendError(res, { statusCode: 401, message: "no_token_provided" });
     }
 
     try {
@@ -25,7 +25,7 @@ export const authMiddleware = async (req, res, next) => {
                 { userId: decoded.id, ip: req.ip, path: req.originalUrl },
                 "Token user not found"
             );
-            return sendError(res, { statusCode: 401, message: "User not found, authorization denied" });
+            return sendError(res, { statusCode: 401, message: "user_not_found_auth_denied" });
         }
         req.user = user; // Attach user to request object
         next();
@@ -34,7 +34,7 @@ export const authMiddleware = async (req, res, next) => {
             { err: error, ip: req.ip, path: req.originalUrl },
             "Auth middleware token verification failed"
         );
-        return sendError(res, { statusCode: 401, message: "Invalid token, authorization denied" });
+        return sendError(res, { statusCode: 401, message: "invalid_token_auth_denied" });
     }
 
 };

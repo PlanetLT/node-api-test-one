@@ -18,7 +18,7 @@ const addToWatchlist = async (req, res) => {
 
     return sendSuccess(res, {
       statusCode: 201,
-      message: "Watchlist item created successfully",
+      message: "watchlist_item_created",
       data: { watchlistItem },
     });
   } catch (error) {
@@ -45,7 +45,7 @@ const updateWatchlistItem = async (req, res) => {
     });
 
     return sendSuccess(res, {
-      message: "Watchlist item updated successfully",
+      message: "watchlist_item_updated",
       data: { watchlistItem: updatedItem },
     });
   } catch (error) {
@@ -66,7 +66,7 @@ const removeFromWatchlist = async (req, res) => {
   try {
     await removeItem(req.user.id, req.params.id);
 
-    return sendSuccess(res, { message: "Movie removed from watchlist" });
+    return sendSuccess(res, { message: "movie_removed" });
   } catch (error) {
     if (error?.status) {
       return sendError(res, { statusCode: error.status, message: error.message });
@@ -83,7 +83,7 @@ const getWatchlist = async (req, res) => {
     const data = await getItems(req.user.id, { page, limit });
 
     return sendSuccess(res, {
-      message: "Watchlist fetched successfully",
+      message: "watchlist_fetched",
       data,
     });
   } catch (error) {

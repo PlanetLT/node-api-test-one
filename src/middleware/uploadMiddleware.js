@@ -52,10 +52,13 @@ const uploadImage = (req, res, next) => {
         }
 
         if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
-            return sendError(res, { statusCode: 400, message: "Image size must be less than or equal to 5MB" });
+            return sendError(res, { statusCode: 400, message: "image_size_limit" });
         }
 
-        return sendError(res, { statusCode: 400, message: error.message || "Image upload failed" });
+        return sendError(res, {
+            statusCode: 400,
+            message: error.message ? "invalid_image_type" : "file_upload_error",
+        });
     });
 };
 

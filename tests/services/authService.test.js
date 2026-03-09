@@ -51,13 +51,13 @@ describe("authService", () => {
 
     await expect(
       registerUser({ name: "A", email: "a@a.com", password: "secret" })
-    ).rejects.toMatchObject({ status: 400, message: "User already exists" });
+    ).rejects.toMatchObject({ status: 400, message: "user_already_exists" });
   });
 
   it("loginUser throws when email/password missing", async () => {
     await expect(loginUser({ email: "", password: "" })).rejects.toMatchObject({
       status: 400,
-      message: "name, email, and password are required",
+      message: "email_and_password_required",
     });
   });
 
