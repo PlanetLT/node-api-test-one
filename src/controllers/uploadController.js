@@ -1,5 +1,6 @@
 import { buildImageUploadResponse } from "../services/uploadService.js";
 import { sendSuccess, sendError } from "../utils/apiResponse.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
 
 const uploadImageFile = async (req, res) => {
     try {
@@ -10,7 +11,7 @@ const uploadImageFile = async (req, res) => {
         });
 
         return sendSuccess(res, {
-            statusCode: 201,
+            statusCode: HTTP_STATUS.CREATED,
             message: payload.message,
             data: { imagePath: payload.imagePath },
         });

@@ -1,4 +1,5 @@
 import { sendError } from "../utils/apiResponse.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
 
 export const validateRequest = (schema) => {
   return (req, res, next) => {
@@ -14,7 +15,7 @@ export const validateRequest = (schema) => {
         .flat();
 
       return sendError(res, {
-        statusCode: 400,
+        statusCode: HTTP_STATUS.BAD_REQUEST,
         message: "validation_error_with_details",
         messageParams: { details: flatErrors.join(", ") },
       });

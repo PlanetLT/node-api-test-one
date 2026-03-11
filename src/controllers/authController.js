@@ -17,6 +17,7 @@ import {
     signRefreshToken,
     verifyRefreshToken,
 } from "../utils/tokenService.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
 
 const sendAuthError = (res, error, req) => {
     if (error?.status) {
@@ -25,7 +26,7 @@ const sendAuthError = (res, error, req) => {
 
     if (error?.code === "ECONNREFUSED" || error?.code === "DB_NOT_CONFIGURED") {
         return sendError(res, {
-            statusCode: 503,
+            statusCode: HTTP_STATUS.SERVICE_UNAVAILABLE,
             message: "database_unavailable",
         });
     }
@@ -62,9 +63,9 @@ const register = async (req, res) => {
         setAuthCookies(res, { accessToken, refreshToken });
         auditLogger.info({ userId: user.id, email: user.email }, "User registered");
         return sendSuccess(res, {
-            statusCode: 201,
+            statusCode: HTTP_STATUS.CREATED,
             message: "user_registered",
-            data: { user, accessToken },
+            data: { user, accessToken, refreshToken },
         });
     } catch (error) {
         securityLogger.error({ err: error, email: req.body?.email }, "Register error");
@@ -82,9 +83,9 @@ const login = async (req, res) => {
         auditLogger.info({ userId: user.id, email: user.email }, "User logged in");
 
         return sendSuccess(res, {
-            statusCode: 201,
+            statusCode: HTTP_STATUS.CREATED,
             message: "login_success",
-            data: { user, accessToken },
+            data: { user, accessToken, refreshToken },
         });
     } catch (error) {
         securityLogger.warn({ err: error, email: req.body?.email }, "Login error");
@@ -96,7 +97,7 @@ const refreshAccessToken = async (req, res) => {
     try {
         const refreshToken = extractRefreshToken(req);
         if (!refreshToken) {
-            return sendError(res, { statusCode: 401, message: "token_required" });
+            return sendError(res, { statusCode: HTTP_STATUS.UNAUTHORIZED, message: "token_required" });
         }
 
         const decoded = verifyRefreshToken(refreshToken);
@@ -107,7 +108,7 @@ const refreshAccessToken = async (req, res) => {
         });
 
         if (!activeRefreshToken) {
-            return sendError(res, { statusCode: 401, message: "invalid_token" });
+            return sendError(res, { statusCode: HTTP_STATUS.UNAUTHORIZED, message: "invalid_token" });
         }
 
         await revokeRefreshTokenByHash({ userId: decoded.id, tokenHash });
@@ -119,11 +120,14 @@ const refreshAccessToken = async (req, res) => {
 
         return sendSuccess(res, {
             message: "access_token_refreshed",
-            data: { accessToken: nextAccessToken },
+            data: { accessToken: nextAccessToken, refreshToken: nextRefreshToken },
         });
     } catch (error) {
         securityLogger.warn({ err: error, ip: req.ip }, "Refresh token error");
-        return sendError(res, { statusCode: 401, message: "invalid_or_expired_refresh_token" });
+        return sendError(res, {
+            statusCode: HTTP_STATUS.UNAUTHORIZED,
+            message: "invalid_or_expired_refresh_token",
+        });
     }
 };
 

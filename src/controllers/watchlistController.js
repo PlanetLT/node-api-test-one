@@ -5,6 +5,7 @@ import {
   getItems,
 } from "../services/watchlistService.js";
 import { sendSuccess, sendError } from "../utils/apiResponse.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
 
 const addToWatchlist = async (req, res) => {
   try {
@@ -17,7 +18,7 @@ const addToWatchlist = async (req, res) => {
     });
 
     return sendSuccess(res, {
-      statusCode: 201,
+      statusCode: HTTP_STATUS.CREATED,
       message: "watchlist_item_created",
       data: { watchlistItem },
     });

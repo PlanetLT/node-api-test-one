@@ -1,4 +1,5 @@
 import { sendError } from "../utils/apiResponse.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
 
 const routeMethodMap = [
     { path: "/movies", methods: ["GET", "POST", "PUT", "DELETE"] },
@@ -50,7 +51,7 @@ const methodNotAllowedMiddleware = (req, res, next) => {
 
     res.set("Allow", allowedMethods.join(", "));
     return sendError(res, {
-        statusCode: 405,
+        statusCode: HTTP_STATUS.METHOD_NOT_ALLOWED,
         message: "method_not_allowed_for_route",
         messageParams: {
             method: requestMethod,
@@ -62,7 +63,7 @@ const methodNotAllowedMiddleware = (req, res, next) => {
 
 const notFoundMiddleware = (req, res) =>
     sendError(res, {
-        statusCode: 404,
+        statusCode: HTTP_STATUS.NOT_FOUND,
         message: "route_not_found",
         messageParams: {
             method: req.method.toUpperCase(),

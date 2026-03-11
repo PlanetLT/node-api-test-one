@@ -14,6 +14,7 @@ import { logger, requestLogger } from "./utils/logger.js";
 import { methodNotAllowedMiddleware, notFoundMiddleware } from "./middleware/methodNotAllowedMiddleware.js";
 import i18next from "./i18n.js";
 import i18nextMiddleware from "i18next-http-middleware";
+import { HTTP_STATUS } from "./constants/httpStatus.js";
 
 config();
 
@@ -33,7 +34,7 @@ const apiLimiter = rateLimit({
     max: 100, // limit each IP to 100 requests per window
     handler: (_req, res) => {
         return sendError(res, {
-            statusCode: 429,
+            statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
             message: "too_many_requests_from_ip",
         });
     },

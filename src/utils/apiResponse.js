@@ -1,4 +1,5 @@
 import i18next from "../i18n.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
 
 const translate = (res, message, messageParams = {}) => {
     if (!message) {
@@ -12,7 +13,12 @@ const translate = (res, message, messageParams = {}) => {
 
 const sendSuccess = (
     res,
-    { statusCode = 200, message = "success", messageParams = null, data = null } = {}
+    {
+        statusCode = HTTP_STATUS.OK,
+        message = "success",
+        messageParams = null,
+        data = null,
+    } = {}
 ) => {
     const localizedMessage = translate(res, message, messageParams);
 
@@ -26,7 +32,7 @@ const sendSuccess = (
 const sendError = (
     res,
     {
-        statusCode = 500,
+        statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR,
         message = "internal_server_error",
         messageParams = null,
         errors = null,

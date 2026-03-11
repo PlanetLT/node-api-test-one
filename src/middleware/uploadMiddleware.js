@@ -3,6 +3,7 @@ import path from "path";
 import multer from "multer";
 import { fileURLToPath } from "url";
 import { sendError } from "../utils/apiResponse.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,11 +53,14 @@ const uploadImage = (req, res, next) => {
         }
 
         if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
-            return sendError(res, { statusCode: 400, message: "image_size_limit" });
+            return sendError(res, {
+                statusCode: HTTP_STATUS.BAD_REQUEST,
+                message: "image_size_limit",
+            });
         }
 
         return sendError(res, {
-            statusCode: 400,
+            statusCode: HTTP_STATUS.BAD_REQUEST,
             message: error.message ? "invalid_image_type" : "file_upload_error",
         });
     });
