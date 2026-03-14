@@ -39,5 +39,6 @@
 
   "movie_route_test": "Movie route စမ်းသပ်မှု အောင်မြင်ပါသည်",
   "method_not_allowed_for_route": "{{path}} အတွက် {{method}} method ကို ခွင့်မပြုပါ",
-  "route_not_found": "{{method}} {{path}} route ကို မတွေ့ရှိပါ"
+  "route_not_found": "{{method}} {{path}} route ကို မတွေ့ရှိပါ",
+  "token_revoked":"တိုကင်ကို ရုတ်သိမ်းလိုက်သည်။"
 }

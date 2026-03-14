@@ -4,6 +4,7 @@ import { sendError } from "../utils/apiResponse.js";
 import { securityLogger } from "../utils/logger.js";
 import { extractAccessToken } from "../utils/tokenService.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { isAccessTokenRevoked } from "../services/tokenRevocationService.js";
 
 const accessTokenSecret =
     process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET;
@@ -23,6 +24,17 @@ export const authMiddleware = async (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, accessTokenSecret);
+        const revoked = await isAccessTokenRevoked(token);
+        if (revoked) {
+            securityLogger.warn(
+                { userId: decoded.id, ip: req.ip, path: req.originalUrl },
+                "Access token revoked"
+            );
+            return sendError(res, {
+                statusCode: HTTP_STATUS.UNAUTHORIZED,
+                message: "token_revoked",
+            });
+        }
         const user = await prisma.user.findUnique({ where: { id: decoded.id } });
         if (!user) {
             securityLogger.warn(

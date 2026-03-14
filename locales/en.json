@@ -39,5 +39,6 @@
 
   "movie_route_test": "Movie route test success",
   "method_not_allowed_for_route": "Method {{method}} not allowed for {{path}}",
-  "route_not_found": "Route {{method}} {{path}} not found"
+  "route_not_found": "Route {{method}} {{path}} not found",
+  "token_revoked":"Token Revoked"
 }

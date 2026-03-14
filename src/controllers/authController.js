@@ -10,14 +10,17 @@ import { sendSuccess, sendError } from "../utils/apiResponse.js";
 import { auditLogger, securityLogger } from "../utils/logger.js";
 import {
     clearAuthCookies,
+    extractAccessToken,
     extractRefreshToken,
     hashToken,
     setAuthCookies,
     signAccessToken,
     signRefreshToken,
+    verifyAccessToken,
     verifyRefreshToken,
 } from "../utils/tokenService.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { revokeAccessToken } from "../services/tokenRevocationService.js";
 
 const sendAuthError = (res, error, req) => {
     if (error?.status) {
@@ -133,6 +136,16 @@ const refreshAccessToken = async (req, res) => {
 
 const logout = async (req, res) => {
     try {
+        const accessToken = extractAccessToken(req);
+        if (accessToken) {
+            try {
+                const decodedAccess = verifyAccessToken(accessToken);
+                await revokeAccessToken({ token: accessToken, decoded: decodedAccess });
+            } catch (_error) {
+                // Continue logout even if access token cannot be decoded.
+            }
+        }
+
         const refreshToken = extractRefreshToken(req);
         if (refreshToken) {
             try {
