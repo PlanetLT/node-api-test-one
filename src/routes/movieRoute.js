@@ -1,39 +1,42 @@
 import express from "express";
-import { sendSuccess } from "../utils/apiResponse.js";
-import { cacheMiddleware, invalidateCache } from "../middleware/cacheMiddleware.js";
+import { validateRequest } from "../middleware/validationRequest.js";
+import {
+  cacheMiddleware,
+  invalidateCache,
+} from "../middleware/cacheMiddleware.js";
+import {
+  createMovieSchema,
+  updateMovieSchema,
+} from "../validators/movieValidators.js";
+import {
+  createMovieItem,
+  deleteMovieItem,
+  updateMovieItem,
+  getMovielist,
+} from "../controllers/movieController.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 const movieListCacheKey = "movies:list";
 
-router.get(
-    "/",
-    cacheMiddleware(() => movieListCacheKey),
-    (req, res) => {
-    return sendSuccess(res, {
-        message: "movie_route_test",
-        data: { httpMethod: "GET" },
-    });
-});
+router.use(authMiddleware);
 
-router.post("/", async (req, res) => {
-    await invalidateCache(movieListCacheKey);
-    return sendSuccess(res, {
-        message: "movie_route_test",
-        data: { httpMethod: "POST" },
-    });
-});
-router.put("/", async (req, res) => {
-    await invalidateCache(movieListCacheKey);
-    return sendSuccess(res, {
-        message: "movie_route_test",
-        data: { httpMethod: "PUT" },
-    });
-});
-router.delete("/", async (req, res) => {
-    await invalidateCache(movieListCacheKey);
-    return sendSuccess(res, {
-        message: "movie_route_test",
-        data: { httpMethod: "DELETE" },
-    });
-});
+router.post(
+  "/",
+  validateRequest(createMovieSchema),
+  invalidateCache(movieListCacheKey),
+  createMovieItem,
+);
+router.get(
+  "/",
+  cacheMiddleware(() => movieListCacheKey),
+  getMovielist,
+);
+router.put(
+  "/:id",
+  validateRequest(updateMovieSchema),
+  invalidateCache(movieListCacheKey),
+  updateMovieItem,
+);
+router.delete("/:id", invalidateCache(movieListCacheKey), deleteMovieItem);
 export default router;

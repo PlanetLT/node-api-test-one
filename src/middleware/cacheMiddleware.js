@@ -59,14 +59,34 @@ const cacheMiddleware =
     return next();
   };
 
-const invalidateCache = async (key) => {
-  const redisReady = await ensureRedis();
-  if (!redisReady) {
-    return false;
-  }
-  const cacheKey = buildCacheKey(key);
-  await redis.del(cacheKey);
-  return true;
+// const invalidateCache = async (key) => {
+//   const redisReady = await ensureRedis();
+//   if (!redisReady) {
+//     return false;
+//   }
+//   const cacheKey = buildCacheKey(key);
+//   await redis.del(cacheKey);
+//   return true;
+// };
+
+const invalidateCache = (keyFn) => {
+  return async (req, res, next) => {
+    try {
+      const redisReady = await ensureRedis();
+      if (!redisReady) {
+        return next();
+      }
+
+      const key = typeof keyFn === "function" ? keyFn(req) : keyFn;
+      const cacheKey = buildCacheKey(key);
+
+      await redis.del(cacheKey);
+
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
 };
 
 export { cacheMiddleware, invalidateCache, buildCacheKey };
