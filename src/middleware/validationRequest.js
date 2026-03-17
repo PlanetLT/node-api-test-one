@@ -8,15 +8,24 @@ export const validateRequest = (schema) => {
     if (!result.success) {
       const { fieldErrors, formErrors } = result.error.flatten();
       const errors = [];
+      const fieldErrorMap = {};
 
       for (const [field, messages] of Object.entries(fieldErrors)) {
         if (messages?.length) {
-          errors.push(...messages.map((msg) => `${field}: ${msg}`));
+          for (const msg of messages) {
+            fieldErrorMap[field] = msg;
+          }
         }
       }
 
       if (formErrors?.length) {
-        errors.push(...formErrors.map((msg) => `form: ${msg}`));
+        for (const msg of formErrors) {
+          errors.push({ form: msg });
+        }
+      }
+
+      if (Object.keys(fieldErrorMap).length > 0) {
+        errors.push(fieldErrorMap);
       }
 
       return sendError(res, {
