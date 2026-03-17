@@ -71,6 +71,16 @@ const configureRoutes = () => {
     app.use("/watchlist", watchlistRoute);
     app.use("/upload", uploadRoute);
     app.use(notFoundMiddleware);
+    app.use((err, _req, res, next) => {
+        if (err instanceof SyntaxError && "body" in err) {
+            return sendError(res, {
+                statusCode: HTTP_STATUS.BAD_REQUEST,
+                message: "invalid_json_payload_with_details",
+                messageParams: { details: err.message || "Malformed JSON" },
+            });
+        }
+        return next(err);
+    });
 };
 
 const closeServerAndExit = (exitCode) => {

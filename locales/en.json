@@ -4,6 +4,9 @@
   "database_unavailable": "Database is unavailable. Please try again later.",
   "too_many_requests_from_ip": "Too many requests from this IP, please try again later.",
   "validation_error_with_details": "Validation error: {{details}}",
+  "validation_error": "Validation error",
+  "invalid_json_payload": "Invalid JSON payload",
+  "invalid_json_payload_with_details": "Invalid JSON payload: {{details}}",
 
   "user_registered": "User registered successfully",
   "login_success": "User logged in successfully",
